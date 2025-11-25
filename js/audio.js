@@ -12,11 +12,12 @@ window.AudioSys = (function () {
 
     ctx,
 
-    // simple repeating melody loop
+    // simple repeating melody loop (ocean/underwater theme)
     startBackgroundLoop: function () {
       if (bgInterval) return;
 
       bgInterval = setInterval(() => {
+        // Underwater ambient tones
         this._tone(220, 0.12, 0.02);
         this._tone(330, 0.12, 0.02, 0.12);
         this._tone(440, 0.12, 0.02, 0.24);
@@ -47,13 +48,14 @@ window.AudioSys = (function () {
       osc.stop(t + dur);
     },
 
-    // sound when trash is eaten
+    // sound when trash is eaten - satisfying collection sound
     playEat: function () {
       this._tone(700, 0.06, 0.06, 0, "square");
       this._tone(880, 0.08, 0.04, 0.06);
+      this._tone(1000, 0.05, 0.03, 0.12);
     },
 
-    // game over jingle
+    // game over jingle - descending tones
     playGameOver: function () {
       this.stopBackgroundLoop();
 

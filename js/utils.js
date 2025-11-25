@@ -16,6 +16,11 @@ window.Utils = (function () {
     // clamp a value between min and max
     clamp: function (value, min, max) {
       return Math.max(min, Math.min(max, value));
+    },
+
+    // linear interpolation
+    lerp: function (start, end, t) {
+      return start + (end - start) * t;
     }
   };
 

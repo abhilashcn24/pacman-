@@ -27,7 +27,7 @@ const Game = (function () {
   }
 
   function start() {
-    // resume audio context on user gesture (some browsers require this)
+    // resume audio context on user gesture (browsers require this)
     if (AudioSys && AudioSys.ctx && AudioSys.ctx.state === "suspended") {
       AudioSys.ctx.resume();
     }
@@ -55,7 +55,7 @@ const Game = (function () {
   }
 
   function restart() {
-    // show menu so user can re-start (keeps same flow)
+    // show menu so user can re-start
     document.getElementById("endOverlay").classList.add("hide");
     document.getElementById("menu").classList.remove("hide");
   }
@@ -68,9 +68,9 @@ const Game = (function () {
     // show end overlay with stats
     const endOverlay = document.getElementById("endOverlay");
     endOverlay.classList.remove("hide");
-    document.getElementById("endTitle").textContent = "Game Over";
+    document.getElementById("endTitle").textContent = "Game Over!";
     document.getElementById("endDetails").textContent =
-      `Score: ${GameState.score} • Trash: ${GameState.trashCollected}`;
+      `Final Score: ${GameState.score} • Trash Collected: ${GameState.trashCollected}`;
   }
 
   function updateHUD() {
@@ -79,7 +79,6 @@ const Game = (function () {
     document.getElementById("lives").textContent = GameState.lives;
   }
 
-  // Expose a few helpers so engine or other modules can update state
   return {
     init,
     start,
@@ -90,7 +89,7 @@ const Game = (function () {
   };
 })();
 
-// Make Game globally available (Engine uses Game.over / GameState)
+// Make Game globally available
 window.Game = Game;
 window.GameState = Game.GameState || {
   score: 0,

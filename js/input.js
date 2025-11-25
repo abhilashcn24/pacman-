@@ -9,46 +9,69 @@ window.Input = (function () {
     down: false
   };
 
-  // -----------------------------
+  let lastDirection = null;
+
   // Keyboard Controls
-  // -----------------------------
   window.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft") state.left = true;
-    if (e.key === "ArrowRight") state.right = true;
-    if (e.key === "ArrowUp") state.up = true;
-    if (e.key === "ArrowDown") state.down = true;
+    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+      state.left = true;
+      lastDirection = 'left';
+    }
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+      state.right = true;
+      lastDirection = 'right';
+    }
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+      state.up = true;
+      lastDirection = 'up';
+    }
+    if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+      state.down = true;
+      lastDirection = 'down';
+    }
   });
 
   window.addEventListener("keyup", (e) => {
-    if (e.key === "ArrowLeft") state.left = false;
-    if (e.key === "ArrowRight") state.right = false;
-    if (e.key === "ArrowUp") state.up = false;
-    if (e.key === "ArrowDown") state.down = false;
+    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") state.left = false;
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") state.right = false;
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") state.up = false;
+    if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") state.down = false;
   });
 
-  // -----------------------------
   // Touch / Mobile Controls
-  // Drag left-right to move
-  // -----------------------------
   const canvas = document.getElementById("gameCanvas");
 
   let dragging = false;
   let lastX = null;
+  let lastY = null;
 
   canvas.addEventListener("pointerdown", (e) => {
     dragging = true;
     lastX = e.clientX;
+    lastY = e.clientY;
   });
 
   window.addEventListener("pointermove", (e) => {
     if (!dragging) return;
 
     const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
 
-    if (Math.abs(dx) > 10) {
+    // Determine direction based on larger delta
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
       state.right = dx > 0;
       state.left = dx < 0;
+      state.up = false;
+      state.down = false;
       lastX = e.clientX;
+      lastDirection = dx > 0 ? 'right' : 'left';
+    } else if (Math.abs(dy) > 10) {
+      state.down = dy > 0;
+      state.up = dy < 0;
+      state.left = false;
+      state.right = false;
+      lastY = e.clientY;
+      lastDirection = dy > 0 ? 'down' : 'up';
     }
   });
 
@@ -56,10 +79,17 @@ window.Input = (function () {
     dragging = false;
     state.left = false;
     state.right = false;
+    state.up = false;
+    state.down = false;
   });
 
+  function getLastDirection() {
+    return lastDirection;
+  }
+
   return {
-    state
+    state,
+    getLastDirection
   };
 
 })();

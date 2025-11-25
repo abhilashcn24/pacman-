@@ -8,7 +8,8 @@ window.Trash = (function () {
 
     for (let r = 0; r < g.length; r++) {
       for (let c = 0; c < g[0].length; c++) {
-        if (g[r][c] === 2) count++;
+        // Count all trash types (2=bottle, 3=plastic, 4=oil)
+        if (g[r][c] >= 2 && g[r][c] <= 4) count++;
       }
     }
 
@@ -16,11 +17,12 @@ window.Trash = (function () {
   }
 
   function collectAt(r, c) {
-    if (Maze.cell(r, c) === 2) {
+    const cellValue = Maze.cell(r, c);
+    if (cellValue >= 2 && cellValue <= 4) {
       Maze.setCell(r, c, 0);
-      return true;
+      return cellValue; // Return trash type for scoring
     }
-    return false;
+    return 0;
   }
 
   return {

@@ -24,6 +24,8 @@ window.Engine = (function () {
   function start() {
     last = performance.now();
     running = true;
+    elapsed = 0;
+    speedMult = 1;
     requestAnimationFrame(loop);
   }
 
@@ -42,9 +44,7 @@ window.Engine = (function () {
     requestAnimationFrame(loop);
   }
 
-  // -------------------------------------------------------
   // UPDATE STEP
-  // -------------------------------------------------------
   function update(dt) {
 
     elapsed += dt;
@@ -63,10 +63,23 @@ window.Engine = (function () {
     let targetR = p.r;
     let targetC = p.c;
 
-    if (s.left) targetC = p.c - 1;
-    if (s.right) targetC = p.c + 1;
-    if (s.up) targetR = p.r - 1;
-    if (s.down) targetR = p.r + 1;
+    // Update player direction for animation
+    if (s.left) {
+      targetC = p.c - 1;
+      Player.setDirection(2);
+    }
+    if (s.right) {
+      targetC = p.c + 1;
+      Player.setDirection(0);
+    }
+    if (s.up) {
+      targetR = p.r - 1;
+      Player.setDirection(3);
+    }
+    if (s.down) {
+      targetR = p.r + 1;
+      Player.setDirection(1);
+    }
 
     // Check walls
     if (Maze.cell(targetR, targetC) !== 1) {
@@ -75,10 +88,15 @@ window.Engine = (function () {
     }
 
     // Collect trash
-    if (Maze.cell(p.r, p.c) === 2) {
+    const cellValue = Maze.cell(p.r, p.c);
+    if (cellValue >= 2 && cellValue <= 4) {
       Trash.collectAt(p.r, p.c);
       GameState.trashCollected++;
-      GameState.score += 10;
+      
+      // Different trash types give different points
+      const points = cellValue === 4 ? 20 : 10; // Oil spills worth more
+      GameState.score += points;
+      
       AudioSys.playEat();
     }
 
@@ -94,7 +112,7 @@ window.Engine = (function () {
         GameState.score = Math.max(0, GameState.score - 6);
 
         // move enemy slightly away
-        e.c = Utils.clamp(e.c + (Math.random() < 0.5 ? 1 : -1), 1, Maze.cols() - 2);
+        e.c = Utils.clamp(e.c + (Math.random() < 0.5 ? 2 : -2), 1, Maze.cols() - 2);
 
         if (GameState.lives <= 0) Game.over();
       }
@@ -106,9 +124,7 @@ window.Engine = (function () {
     document.getElementById("lives").textContent = GameState.lives;
   }
 
-  // -------------------------------------------------------
   // RENDER STEP
-  // -------------------------------------------------------
   function render() {
     fit();
 
@@ -137,18 +153,29 @@ window.Engine = (function () {
         const y = r * cell;
 
         if (grid[r][c] === 1) {
-          // wall tile
-          ctx.fillStyle = "#083642";
-          ctx.fillRect(x + 2, y + 2, cell - 4, cell - 4);
+          // wall tile - Pac-Man blue style
+          ctx.fillStyle = "#1a4d5c";
+          ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+          
+          // Add border effect
+          ctx.strokeStyle = "#2d7a8f";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x + 1, y + 1, cell - 2, cell - 2);
         } else {
-          // empty tile
-          ctx.fillStyle = "#012026";
+          // empty tile - dark ocean floor
+          ctx.fillStyle = "#001520";
           ctx.fillRect(x, y, cell, cell);
 
-          // trash pellet
+          // Draw trash pellets with different types
           if (grid[r][c] === 2) {
-            ctx.fillStyle = "#bfc0c0";
-            ctx.fillRect(x + cell * 0.42, y + cell * 0.42, cell * 0.16, cell * 0.16);
+            // Bottle
+            drawBottle(ctx, x + cell / 2, y + cell / 2, cell * 0.3);
+          } else if (grid[r][c] === 3) {
+            // Plastic bag
+            drawPlastic(ctx, x + cell / 2, y + cell / 2, cell * 0.35);
+          } else if (grid[r][c] === 4) {
+            // Oil spill
+            drawOil(ctx, x + cell / 2, y + cell / 2, cell * 0.4);
           }
         }
       }
@@ -156,25 +183,102 @@ window.Engine = (function () {
 
     // Draw enemies (fish)
     for (const e of EnemySys.all()) {
-      drawFish(ctx, e.x * cell + cell / 2, e.y * cell + cell / 2, cell * 0.6);
+      drawFish(ctx, e.x * cell + cell / 2, e.y * cell + cell / 2, cell * 0.6, e);
     }
 
     // Draw player
-    Player.draw(ctx, cell, ox, oy);
+    Player.draw(ctx, cell);
 
     ctx.restore();
   }
 
-  // Fish shape rendering
-  function drawFish(ctx, x, y, s) {
+  // Trash rendering functions
+  function drawBottle(ctx, x, y, s) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(Math.sin(performance.now() / 300 + x) * 0.06);
+    
+    // Bottle body
+    ctx.fillStyle = "#8B4513";
+    ctx.fillRect(-s * 0.3, -s * 0.5, s * 0.6, s);
+    
+    // Bottle cap
+    ctx.fillStyle = "#CD853F";
+    ctx.fillRect(-s * 0.2, -s * 0.7, s * 0.4, s * 0.3);
+    
+    // Highlight
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.fillRect(-s * 0.15, -s * 0.3, s * 0.1, s * 0.4);
+    
+    ctx.restore();
+  }
+
+  function drawPlastic(ctx, x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Plastic bag shape
+    ctx.fillStyle = "rgba(200, 200, 200, 0.7)";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.5, s * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Handles
+    ctx.strokeStyle = "rgba(180, 180, 180, 0.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(-s * 0.3, -s * 0.5, s * 0.2, 0, Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(s * 0.3, -s * 0.5, s * 0.2, 0, Math.PI);
+    ctx.stroke();
+    
+    ctx.restore();
+  }
+
+  function drawOil(ctx, x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Oil spill - irregular blob
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
+    gradient.addColorStop(0, "#1a1a1a");
+    gradient.addColorStop(0.5, "#2d2d2d");
+    gradient.addColorStop(1, "rgba(45, 45, 45, 0)");
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, s, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Iridescent effect
+    ctx.fillStyle = "rgba(138, 43, 226, 0.2)";
+    ctx.beginPath();
+    ctx.arc(s * 0.2, -s * 0.2, s * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  }
+
+  // Fish shape rendering with variety
+  function drawFish(ctx, x, y, s, enemy) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Swimming animation
+    const swimOffset = Math.sin(enemy.swimPhase) * 0.08;
+    ctx.rotate(swimOffset);
+    
+    // Flip fish based on facing direction
+    ctx.scale(enemy.facing, 1);
 
     // body
     ctx.beginPath();
     ctx.ellipse(0, 0, s * 0.4, s * 0.3, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "#ff9f43";
+    
+    const gradient = ctx.createRadialGradient(-s * 0.1, -s * 0.1, 0, 0, 0, s * 0.4);
+    gradient.addColorStop(0, enemy.type.color);
+    gradient.addColorStop(1, adjustBrightness(enemy.type.color, -30));
+    ctx.fillStyle = gradient;
     ctx.fill();
 
     // tail
@@ -183,15 +287,39 @@ window.Engine = (function () {
     ctx.lineTo(-s * 0.6, -s * 0.25);
     ctx.lineTo(-s * 0.6, s * 0.25);
     ctx.closePath();
+    ctx.fillStyle = enemy.type.color;
     ctx.fill();
 
     // eye
     ctx.beginPath();
+    ctx.fillStyle = "#fff";
+    ctx.arc(s * 0.15, -s * 0.05, s * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.beginPath();
     ctx.fillStyle = "#222";
-    ctx.arc(s * 0.15, -s * 0.05, s * 0.06, 0, Math.PI * 2);
+    ctx.arc(s * 0.17, -s * 0.05, s * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+
+    // fins
+    ctx.beginPath();
+    ctx.fillStyle = adjustBrightness(enemy.type.color, -20);
+    ctx.ellipse(0, s * 0.2, s * 0.15, s * 0.25, Math.PI / 6, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
+  }
+
+  // Helper to adjust color brightness
+  function adjustBrightness(hex, percent) {
+    const num = parseInt(hex.replace("#",""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+      (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
+      .toString(16).slice(1);
   }
 
   return {
