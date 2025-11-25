@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ocean Cleaner — Pac-Man Style</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+  <div id="app">
+    <div id="wrap">
+      <canvas id="gameCanvas"></canvas>
+
+      <div class="hud">
+        <div>Score: <span id="score">0</span></div>
+        <div>Trash: <span id="trashCount">0</span></div>
+        <div>Lives: <span id="lives">3</span></div>
+      </div>
+
+      <div id="menu" class="overlay">
+        <h1>Ocean Cleaner</h1>
+        <p class="small">Collect trash, avoid fish. Use arrow keys or swipe. Music & SFX included.</p>
+        <button id="startBtn">Start Game</button>
+        <p class="hint">Tip: Replace <code>PLAYER_IMAGE_PATH</code> in <code>js/player.js</code> with your own image or copy the uploaded image into <code>assets/images/player.png</code>.</p>
+      </div>
+
+      <div id="endOverlay" class="overlay hide">
+        <h1 id="endTitle">Game Over</h1>
+        <p id="endDetails" class="small"></p>
+        <button id="restartBtn">Restart</button>
+      </div>
+
+      <div class="controls small">Move: Arrows or drag • Eat = +10</div>
+    </div>
+  </div>
+
+  <!-- Scripts (order matters) -->
+  <script src="js/utils.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/maze.js"></script>
+  <script src="js/trash.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/enemy.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
